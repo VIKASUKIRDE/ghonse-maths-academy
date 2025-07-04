@@ -1,0 +1,6 @@
+{
+  "name": "Ghonse Maths Academy",
+  "description": "A comprehensive role-based educational management system for Ghonse Maths Academy. It supports Admin, Teacher, Student, and Parent functionalities, including user management, batch management, fee tracking, exam handling, and reporting.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

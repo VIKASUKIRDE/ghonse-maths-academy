@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghonse Maths Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.3",
+    "@google/genai": "https://esm.sh/@google/genai"
+  }
+}
+</script>
+<style>
+  @media print {
+    @page {
+      size: A4;
+      margin: 1cm;
+    }
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .printable-area table, .print-only table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .printable-area th, .printable-area td,
+    .print-only th, .print-only td {
+        border: 1px solid #ddd !important;
+        padding: 8px;
+    }
+    .printable-area thead, .print-only thead {
+        display: table-header-group; /* Ensures header repeats on each page */
+    }
+    .print-page, .report-card {
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+    .print-page:last-child, .report-card:last-child {
+        page-break-after: auto;
+    }
+  }
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-50">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
