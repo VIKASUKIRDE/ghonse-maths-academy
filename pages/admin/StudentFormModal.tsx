@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { Student, BatchName, StudentCategory, Gender, StudentType, Division } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
-const StudentFormModal = ({ 
+export const StudentFormModal = ({ 
     currentBatch, 
     studentToEdit,
     onSave, 
-    onCancel 
+    onCancel,
+    allStudents
 }: { 
     currentBatch: BatchName; 
     studentToEdit: (Student & { parentName?: string }) | null;
     onSave: (data: Omit<Student, 'id' | 'rollNo' | 'parentId'> & { parentName: string }, studentId: string | null) => void; 
-    onCancel: () => void; 
+    onCancel: () => void;
+    allStudents: Student[];
 }) => {
     const isEditMode = !!studentToEdit;
     const { availableBatches } = useAuth();
@@ -35,6 +37,11 @@ const StudentFormModal = ({
     const [remarks, setRemarks] = useState('');
     const [totalFees, setTotalFees] = useState<number | ''>(0);
     const [concession, setConcession] = useState<number | ''>(0);
+
+    // State for validation warnings and suggestions
+    const [nameSuggestions, setNameSuggestions] = useState<Student[]>([]);
+    const [studentMobileSuggestions, setStudentMobileSuggestions] = useState<{ student: Student, type: 'student' | 'parent' }[]>([]);
+    const [parentMobileSuggestions, setParentMobileSuggestions] = useState<{ student: Student, type: 'student' | 'parent' }[]>([]);
 
     const standardCategories = ['General', 'OBC', 'SC', 'ST', 'NT', 'VJNT', 'Other'];
     
@@ -139,6 +146,61 @@ const StudentFormModal = ({
         };
     }, [photoPreview]);
 
+    // Real-time validation for duplicates
+    useEffect(() => {
+        // Name check for suggestions
+        const trimmedName = name.trim().toLowerCase();
+        if (trimmedName.length > 2) {
+            const suggestions = allStudents.filter(s => 
+                s.id !== studentToEdit?.id &&
+                s.name.trim().toLowerCase().includes(trimmedName) &&
+                s.batch === batch
+            );
+            setNameSuggestions(suggestions);
+        } else {
+            setNameSuggestions([]);
+        }
+
+        // Student Mobile check
+        const trimmedStudentMobile = studentMobile.trim();
+        if (trimmedStudentMobile.length > 0) {
+            const suggestions: { student: Student, type: 'student' | 'parent' }[] = [];
+            allStudents.forEach(s => {
+                if (s.id !== studentToEdit?.id) {
+                    if (s.studentMobile.startsWith(trimmedStudentMobile)) {
+                        suggestions.push({ student: s, type: 'student' });
+                    }
+                    if (s.parentMobile.startsWith(trimmedStudentMobile)) {
+                        suggestions.push({ student: s, type: 'parent' });
+                    }
+                }
+            });
+            setStudentMobileSuggestions(suggestions);
+        } else {
+            setStudentMobileSuggestions([]);
+        }
+
+        // Parent Mobile check
+        const trimmedParentMobile = parentMobile.trim();
+        if (trimmedParentMobile.length > 0) {
+             const suggestions: { student: Student, type: 'student' | 'parent' }[] = [];
+            allStudents.forEach(s => {
+                if (s.id !== studentToEdit?.id) {
+                    if (s.studentMobile.startsWith(trimmedParentMobile)) {
+                        suggestions.push({ student: s, type: 'student' });
+                    }
+                    if (s.parentMobile.startsWith(trimmedParentMobile)) {
+                        suggestions.push({ student: s, type: 'parent' });
+                    }
+                }
+            });
+            setParentMobileSuggestions(suggestions);
+        } else {
+            setParentMobileSuggestions([]);
+        }
+    }, [name, studentMobile, parentMobile, batch, allStudents, studentToEdit]);
+
+
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -200,6 +262,7 @@ const StudentFormModal = ({
     const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300";
     const inputClass = "mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm";
     const selectClass = inputClass + " pr-10";
+    const suggestionListClass = "border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-md mt-2 p-2 text-sm text-yellow-800 dark:text-yellow-300";
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
@@ -209,13 +272,53 @@ const StudentFormModal = ({
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className={formRowClass}>
-                         <div><label className={labelClass}>Student Full Name</label><input type="text" value={name} onChange={e => setName(toTitleCase(e.target.value))} className={inputClass} required /></div>
-                         <div><label className={labelClass}>Parent Full Name</label><input type="text" value={parentName} onChange={e => setParentName(toTitleCase(e.target.value))} className={inputClass} required /></div>
+                         <div>
+                            <label className={labelClass}>Student Full Name</label>
+                            <input type="text" value={name} onChange={e => setName(toTitleCase(e.target.value))} className={inputClass} required />
+                            {nameSuggestions.length > 0 && (
+                                <ul className={suggestionListClass}>
+                                    <li className="font-semibold">Potential duplicates in this batch:</li>
+                                    {nameSuggestions.map(s => (
+                                        <li key={s.id} className="ml-4 list-disc list-inside">
+                                            {s.name} (Parent Mob: {s.parentMobile})
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                         </div>
+                         <div>
+                            <label className={labelClass}>Parent Full Name</label>
+                            <input type="text" value={parentName} onChange={e => setParentName(toTitleCase(e.target.value))} className={inputClass} required />
+                        </div>
                     </div>
                     <div><label className={labelClass}>Address</label><textarea value={address} onChange={e => setAddress(e.target.value)} className={inputClass} required /></div>
                      <div className={formRowClass}>
-                         <div><label className={labelClass}>Student Mobile</label><input type="tel" value={studentMobile} onChange={e => setStudentMobile(e.target.value)} className={inputClass} required /></div>
-                         <div><label className={labelClass}>Parent Mobile</label><input type="tel" value={parentMobile} onChange={e => setParentMobile(e.target.value)} className={inputClass} required /></div>
+                         <div>
+                            <label className={labelClass}>Student Mobile</label>
+                            <input type="tel" value={studentMobile} onChange={e => setStudentMobile(e.target.value)} className={inputClass} required />
+                             {studentMobileSuggestions.length > 0 && (
+                                <ul className={suggestionListClass}>
+                                    {studentMobileSuggestions.map(({ student, type }, index) => (
+                                        <li key={index} className="list-disc list-inside ml-4">
+                                            {type === 'student' ? student.studentMobile : student.parentMobile} (Belongs to {student.name}'s {type} contact)
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                         </div>
+                         <div>
+                            <label className={labelClass}>Parent Mobile</label>
+                            <input type="tel" value={parentMobile} onChange={e => setParentMobile(e.target.value)} className={inputClass} required />
+                            {parentMobileSuggestions.length > 0 && (
+                                <ul className={suggestionListClass}>
+                                    {parentMobileSuggestions.map(({ student, type }, index) => (
+                                        <li key={index} className="list-disc list-inside ml-4">
+                                            {type === 'student' ? student.studentMobile : student.parentMobile} (Belongs to {student.name}'s {type} contact)
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                         </div>
                     </div>
                      <div className={formRowClass}>
                         <div>
@@ -281,5 +384,3 @@ const StudentFormModal = ({
         </div>
     );
 };
-
-export default StudentFormModal;

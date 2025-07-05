@@ -90,6 +90,7 @@ const AdminTeacherManagement: React.FC = () => {
                                 <tr>
                                     <th scope="col" className="px-6 py-3">Name</th>
                                     <th scope="col" className="px-6 py-3">Mobile</th>
+                                    <th scope="col" className="px-6 py-3">Credentials</th>
                                     <th scope="col" className="px-6 py-3">Qualification</th>
                                     <th scope="col" className="px-6 py-3">Experience (yrs)</th>
                                     <th scope="col" className="px-6 py-3">Assigned Batches</th>
@@ -98,9 +99,13 @@ const AdminTeacherManagement: React.FC = () => {
                             </thead>
                             <tbody>
                                 {teachers.map(t => (
-                                    <tr key={t.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <tr key={t.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 align-middle">
                                         <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{t.name}</th>
                                         <td className="px-6 py-4">{t.mobile}</td>
+                                        <td className="px-6 py-4 text-xs">
+                                            <div>ID: <span className="font-semibold">{t.mobile}</span></div>
+                                            <div className="mt-1">Pass: <span className="font-semibold">{t.password || 'Ghonse@123'}</span></div>
+                                        </td>
                                         <td className="px-6 py-4">{t.qualification}</td>
                                         <td className="px-6 py-4 text-center">{t.experience}</td>
                                         <td className="px-6 py-4">{t.assignedBatches.join(', ')}</td>

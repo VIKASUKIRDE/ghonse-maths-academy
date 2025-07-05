@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { APP_NAME, ICONS } from '../constants';
-import { BatchName, UserRole } from '../types';
+import { BatchName, UserRole, AcademicYear } from '../types';
 
 interface HeaderProps {
     setSidebarOpen: (open: boolean) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
-  const { user, logout, switchBatch, availableBatches: allAvailableBatches } = useAuth();
+  const { user, logout, switchBatch, switchAcademicYear, availableBatches: allAvailableBatches, availableAcademicYears, backupData } = useAuth();
   
   const canSwitchBatches = user?.role === UserRole.Admin || user?.role === UserRole.Teacher;
 
@@ -30,6 +30,26 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
       }
   };
 
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const newYear = event.target.value as AcademicYear;
+      if (newYear !== user?.academicYear) {
+          switchAcademicYear(newYear);
+      }
+  };
+  
+  const handleLogout = async () => {
+    if (user?.role === UserRole.Admin) {
+        if (window.confirm("Do you want to download a data backup before logging out?")) {
+            try {
+                await backupData();
+            } catch (err) {
+                alert("Backup failed during logout. Please try again from the Profile page.");
+            }
+        }
+    }
+    logout();
+  };
+
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 no-print">
       <div className="flex items-center">
@@ -46,8 +66,26 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
       <div className="flex items-center">
         <div className="flex flex-col items-end mr-4">
             <span className="font-semibold text-slate-800 dark:text-slate-200">{user?.name}</span>
-            <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center">
+            <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center flex-wrap justify-end">
                 <span>{user?.role}</span>
+                {user?.role === UserRole.Admin && user.academicYear && (
+                    <div className="relative flex items-center">
+                        <span className="mx-1">/</span>
+                        <select 
+                            value={user.academicYear} 
+                            onChange={handleYearChange}
+                            className="font-semibold bg-transparent border-0 rounded-md p-0 pl-1 pr-6 focus:ring-0 focus:outline-none cursor-pointer appearance-none text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            aria-label="Change academic year"
+                        >
+                            {availableAcademicYears.map(year => (
+                                <option key={year} value={year} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                    {year}
+                                </option>
+                            ))}
+                        </select>
+                        <svg className="w-4 h-4 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                )}
                 {user?.currentBatch && (
                     canSwitchBatches && availableBatchesForSwitch.length > 1 ? (
                         <div className="relative flex items-center">
@@ -73,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ setSidebarOpen }) => {
             </div>
         </div>
         
-        <button onClick={logout} className="flex items-center text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 transition-colors duration-200">
+        <button onClick={handleLogout} className="flex items-center text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 transition-colors duration-200">
           {ICONS.logout}
           <span className="ml-2 hidden sm:inline">Logout</span>
         </button>

@@ -29,6 +29,8 @@ import AdminProfilePage from './pages/admin/AdminProfilePage';
 import AdminStarPerformerManagement from './pages/admin/AdminStarPerformerManagement';
 import FeeReceiptPage from './pages/admin/FeeReceiptPage';
 import TeacherProgressReport from './pages/teacher/TeacherProgressReport';
+import ParentChildSelectionPage from './pages/parent/ParentChildSelectionPage';
+import AcademicYearSelectionPage from './pages/admin/AcademicYearSelectionPage';
 
 const ProtectedRoute: React.FC<{ roles: UserRole[]; children: React.ReactNode }> = ({ roles, children }) => {
   const { user, loading } = useAuth();
@@ -59,7 +61,9 @@ const ProtectedPagesLayout: React.FC = () => {
                     <Route path="/star-performers" element={<ProtectedRoute roles={[UserRole.Admin]}><AdminStarPerformerManagement /></ProtectedRoute>} />
                     <Route path="/sms" element={<ProtectedRoute roles={[UserRole.Admin]}><AdminSmsManagement /></ProtectedRoute>} />
                     <Route path="/reports" element={<ProtectedRoute roles={[UserRole.Admin]}><AdminReports /></ProtectedRoute>} />
-                    <Route path="/profile" element={<ProtectedRoute roles={[UserRole.Admin]}><AdminProfilePage /></ProtectedRoute>} />
+                    
+                    {/* Multi-Role Routes */}
+                    <Route path="/profile" element={<ProtectedRoute roles={[UserRole.Admin, UserRole.Teacher, UserRole.Student, UserRole.Parent]}><AdminProfilePage /></ProtectedRoute>} />
 
                     {/* Teacher Routes */}
                     <Route path="/teacher/students" element={<ProtectedRoute roles={[UserRole.Teacher]}><TeacherDashboard /></ProtectedRoute>} />
@@ -93,13 +97,25 @@ const AppRoutes: React.FC = () => {
     }
 
     if (tempUser && !user) {
-        // User is authenticated but needs to select a batch.
-        return (
-            <Routes>
-                <Route path="/select-batch" element={<BatchSelectionPage />} />
-                <Route path="*" element={<Navigate to="/select-batch" replace />} />
-            </Routes>
-        );
+        // Handle multi-step logins
+        if (tempUser.role === UserRole.Parent && tempUser.childrenToSelect) {
+            return (
+                <Routes>
+                    <Route path="/select-child" element={<ParentChildSelectionPage />} />
+                    <Route path="*" element={<Navigate to="/select-child" replace />} />
+                </Routes>
+            );
+        }
+        
+        // Admin (with year selected) or Teacher needs to select a batch.
+        if ((tempUser.role === UserRole.Admin || tempUser.role === UserRole.Teacher)) {
+            return (
+                <Routes>
+                    <Route path="/select-batch" element={<BatchSelectionPage />} />
+                    <Route path="*" element={<Navigate to="/select-batch" replace />} />
+                </Routes>
+            );
+        }
     }
 
     return (

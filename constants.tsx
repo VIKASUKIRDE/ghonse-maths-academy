@@ -44,12 +44,14 @@ export const ROLE_NAV_LINKS: Record<UserRole, { href: string; label: string; ico
     { href: '/teacher/students', label: 'My Students', icon: ICONS.users },
     { href: '/teacher/exams', label: 'Exam Management', icon: ICONS.exams },
     { href: '/teacher/progress-report', label: 'Progress Report', icon: ICONS.reports },
+    { href: '/profile', label: 'Profile', icon: ICONS.profile },
   ],
   [UserRole.Student]: [
     { href: '/dashboard', label: 'Dashboard', icon: ICONS.dashboard },
     { href: '/student/report-card', label: 'Report Card', icon: ICONS.reports },
     { href: '/student/exam-dates', label: 'Exam Dates', icon: ICONS.exams },
     { href: '/student/attendance', label: 'Attendance', icon: ICONS.attendance },
+    { href: '/profile', label: 'Profile', icon: ICONS.profile },
   ],
   [UserRole.Parent]: [
     { href: '/dashboard', label: 'Dashboard', icon: ICONS.dashboard },

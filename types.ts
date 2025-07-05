@@ -5,6 +5,8 @@ export enum UserRole {
   Parent = 'Parent',
 }
 
+export type AcademicYear = string; // e.g., "2024-2025"
+
 export type StudentCategory = string;
 
 export enum Gender {
@@ -41,8 +43,12 @@ export interface User {
   role: UserRole;
   mobile?: string; // Used for login for Parent/Student/Teacher
   username?: string; // Used for login for Admin
+  password?: string;
   currentBatch?: BatchName; // The batch the user is currently managing
   assignedBatches?: BatchName[]; // For teachers, the batches they can choose from
+  childrenToSelect?: { parentId: string, childId: string, childName: string, childBatch: BatchName }[];
+  academicYear?: AcademicYear;
+  availableAcademicYears?: AcademicYear[];
 }
 
 export interface Payment {
@@ -79,6 +85,7 @@ export interface Student {
   photoUrl: string;
   remarks: string;
   fees: FeeDetails;
+  password?: string;
   parentId: string;
 }
 
@@ -89,6 +96,7 @@ export interface Teacher {
   assignedBatches: BatchName[];
   qualification: string;
   experience: number; // in years
+  password?: string;
 }
 
 export interface Parent {
@@ -96,6 +104,7 @@ export interface Parent {
   name: string;
   mobile: string;
   childId: string;
+  password?: string;
 }
 
 export interface Exam {
@@ -130,4 +139,21 @@ export interface StarPerformerDetails {
   examId?: string;
   remarks?: string;
   description?: string;
+}
+
+// New types for multi-year data management
+export interface AcademyData {
+    students: Student[];
+    parents: Parent[];
+    exams: Exam[];
+    examResults: ExamResult[];
+    attendance: Record<string, Attendance[]>;
+    availableBatches: Batch[];
+    starPerformers: StarPerformerDetails[];
+}
+
+export interface FullDatabase {
+    academicYears: Record<AcademicYear, AcademyData>;
+    teachers: Teacher[];
+    smsHistory: SmsMessage[];
 }

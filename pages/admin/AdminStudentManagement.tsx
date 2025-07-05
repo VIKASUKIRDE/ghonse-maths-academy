@@ -1,38 +1,43 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { api } from '../../services/mockApi';
 import { Student, Parent } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
-import StudentFormModal from './StudentFormModal';
+import { StudentFormModal } from './StudentFormModal';
 
 
 const AdminStudentManagement: React.FC = () => {
     const { user } = useAuth();
-    const [students, setStudents] = useState<Student[]>([]);
+    const [allStudentsInYear, setAllStudentsInYear] = useState<Student[]>([]);
     const [parents, setParents] = useState<Parent[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState<(Student & { parentName?: string }) | null>(null);
 
     const fetchStudentsAndParents = useCallback(async () => {
-        if (!user?.currentBatch) return;
         setLoading(true);
         try {
             const [studentData, parentData] = await Promise.all([
-                api.getStudentsByBatch(user.currentBatch),
+                api.getStudents(), // Fetch all students for the current academic year
                 api.getParents(),
             ]);
-            setStudents(studentData);
+            setAllStudentsInYear(studentData);
             setParents(parentData);
         } catch (error) {
             console.error("Failed to fetch students:", error);
         } finally {
             setLoading(false);
         }
-    }, [user?.currentBatch]);
+    }, []);
 
     useEffect(() => {
         fetchStudentsAndParents();
     }, [fetchStudentsAndParents]);
+
+    const studentsInCurrentBatch = useMemo(() => {
+        if (!user?.currentBatch) return [];
+        return allStudentsInYear.filter(s => s.batch === user.currentBatch);
+    }, [allStudentsInYear, user?.currentBatch]);
+
 
     const handleOpenAddModal = () => {
         setEditingStudent(null);
@@ -54,7 +59,7 @@ const AdminStudentManagement: React.FC = () => {
         const { parentName, ...formData } = formDataWithParent;
         try {
             if (studentId) { // Edit Mode
-                const originalStudent = students.find(s => s.id === studentId);
+                const originalStudent = allStudentsInYear.find(s => s.id === studentId);
                 if (originalStudent) {
                     const updatedStudent: Student = {
                         ...originalStudent, // keep id, rollno, parentId, etc.
@@ -104,21 +109,28 @@ const AdminStudentManagement: React.FC = () => {
                                     <th scope="col" className="px-6 py-3">Photo</th>
                                     <th scope="col" className="px-6 py-3">Roll No</th>
                                     <th scope="col" className="px-6 py-3">Name</th>
-                                    <th scope="col" className="px-6 py-3">Mobile</th>
+                                    <th scope="col" className="px-6 py-3">Student Mobile</th>
+                                    <th scope="col" className="px-6 py-3">Parent Mobile</th>
+                                    <th scope="col" className="px-6 py-3">Credentials</th>
                                     <th scope="col" className="px-6 py-3">Division</th>
                                     <th scope="col" className="px-6 py-3">Category</th>
                                     <th scope="col" className="px-6 py-3 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {students.map(s => (
-                                    <tr key={s.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                {studentsInCurrentBatch.map(s => (
+                                    <tr key={s.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 align-middle">
                                         <td className="px-6 py-4">
                                             <img src={s.photoUrl} alt={s.name} className="w-10 h-10 rounded-full object-cover" />
                                         </td>
                                         <td className="px-6 py-4">{s.rollNo}</td>
                                         <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{s.name}</th>
                                         <td className="px-6 py-4">{s.studentMobile}</td>
+                                        <td className="px-6 py-4">{s.parentMobile}</td>
+                                        <td className="px-6 py-4 text-xs">
+                                            <div>ID: <span className="font-semibold">{s.studentMobile}</span></div>
+                                            <div className="mt-1">Pass: <span className="font-semibold">{s.password || 'Ghonse@123'}</span></div>
+                                        </td>
                                         <td className="px-6 py-4 font-medium">{s.division}</td>
                                         <td className="px-6 py-4">{s.category}</td>
                                         <td className="px-6 py-4 text-right space-x-2">
@@ -138,7 +150,8 @@ const AdminStudentManagement: React.FC = () => {
                     currentBatch={user.currentBatch} 
                     studentToEdit={editingStudent}
                     onSave={handleSaveStudent} 
-                    onCancel={handleCloseModal} 
+                    onCancel={handleCloseModal}
+                    allStudents={allStudentsInYear}
                 />
             )}
         </div>
